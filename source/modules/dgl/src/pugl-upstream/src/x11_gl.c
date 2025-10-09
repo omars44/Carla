@@ -6,8 +6,8 @@
 #include "types.h"
 #include "x11.h"
 
-#include "pugl/gl.h"
-#include "pugl/pugl.h"
+#include <pugl/gl.h>
+#include <pugl/pugl.h>
 
 #include <GL/glx.h>
 #include <X11/X.h>
@@ -101,8 +101,7 @@ puglX11GlConfigure(PuglView* view)
   return PUGL_SUCCESS;
 }
 
-PUGL_WARN_UNUSED_RESULT
-static PuglStatus
+PUGL_WARN_UNUSED_RESULT static PuglStatus
 puglX11GlEnter(PuglView* view, const PuglExposeEvent* PUGL_UNUSED(expose))
 {
   PuglX11GlSurface* surface = (PuglX11GlSurface*)view->impl->surface;
@@ -115,8 +114,7 @@ puglX11GlEnter(PuglView* view, const PuglExposeEvent* PUGL_UNUSED(expose))
                                                                 : PUGL_FAILURE;
 }
 
-PUGL_WARN_UNUSED_RESULT
-static PuglStatus
+PUGL_WARN_UNUSED_RESULT static PuglStatus
 puglX11GlLeave(PuglView* view, const PuglExposeEvent* expose)
 {
   Display* const display = view->world->impl->display;

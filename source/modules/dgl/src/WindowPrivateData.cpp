@@ -91,10 +91,10 @@ static PuglView* puglNewViewWithParentWindow(PuglWorld* const world, const uintp
 
     if (PuglView* const view = puglNewView(world))
     {
-        puglSetParentWindow(view, parentWindowHandle);
+        puglSetParent(view, parentWindowHandle);
 
         if (parentWindowHandle != 0)
-            puglSetPosition(view, 0, 0);
+            puglSetPositionHint(view, PUGL_DEFAULT_POSITION, 0, 0);
 
         return view;
     }
@@ -268,6 +268,9 @@ Window::PrivateData::~PrivateData()
         isVisible = false;
     }
 
+   #ifndef DPF_TEST_WINDOW_CPP
+    destroyContext();
+   #endif
     puglFreeView(view);
 }
 
@@ -300,8 +303,8 @@ void Window::PrivateData::initPre(const uint width, const uint height, const boo
     // PUGL_SAMPLES ??
     puglSetEventFunc(view, puglEventCallback);
 
-    // setting default size triggers system-level calls, do it last
-    puglSetSizeHint(view, PUGL_DEFAULT_SIZE, static_cast<PuglSpan>(width), static_cast<PuglSpan>(height));
+    // setting size triggers system-level calls, do it last
+    puglSetSizeAndDefault(view, width, height);
 }
 
 bool Window::PrivateData::initPost()
@@ -365,10 +368,6 @@ void Window::PrivateData::show()
     {
         isClosed = false;
         appData->oneWindowShown();
-
-        // FIXME
-//         PuglRect rect = puglGetFrame(view);
-//         puglSetWindowSize(view, static_cast<uint>(rect.width), static_cast<uint>(rect.height));
 
 #if defined(DISTRHO_OS_WINDOWS)
         puglWin32ShowCentered(view);
@@ -451,6 +450,13 @@ void Window::PrivateData::setResizable(const bool resizable)
     DGL_DBG("Window setResizable called\n");
 
     puglSetResizable(view, resizable);
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+
+const GraphicsContext& Window::PrivateData::getGraphicsContext() const noexcept
+{
+    return reinterpret_cast<const GraphicsContext&>(graphicsContext);
 }
 
 // -----------------------------------------------------------------------
@@ -538,9 +544,9 @@ bool Window::PrivateData::createWebView(const char* const url, const DGL_NAMESPA
     if (webViewHandle != nullptr)
         webViewDestroy(webViewHandle);
 
-    const PuglRect rect = puglGetFrame(view);
-    uint initialWidth = static_cast<uint>(rect.width) - options.offset.x;
-    uint initialHeight = static_cast<uint>(rect.height) - options.offset.y;
+    const PuglArea size = puglGetSizeHint(view, PUGL_CURRENT_SIZE);
+    uint initialWidth = size.width - options.offset.x;
+    uint initialHeight = size.height - options.offset.y;
 
     webViewOffset = Point<int>(options.offset.x, options.offset.y);
 
@@ -640,6 +646,10 @@ void Window::PrivateData::onPuglConfigure(const uint width, const uint height)
 
     DGL_DBGp("PUGL: onReshape : %d %d\n", width, height);
 
+   #ifndef DPF_TEST_WINDOW_CPP
+    createContextIfNeeded();
+   #endif
+
     if (autoScaling)
     {
         const double scaleHorizontal = width  / static_cast<double>(minWidth);
@@ -682,7 +692,7 @@ void Window::PrivateData::onPuglConfigure(const uint width, const uint height)
 #endif
 
     // always repaint after a resize
-    puglPostRedisplay(view);
+    puglObscureView(view);
 }
 
 void Window::PrivateData::onPuglExpose()
@@ -692,6 +702,8 @@ void Window::PrivateData::onPuglExpose()
     puglOnDisplayPrepare(view);
 
 #ifndef DPF_TEST_WINDOW_CPP
+    startContext();
+
     FOR_EACH_TOP_LEVEL_WIDGET(it)
     {
         TopLevelWidget* const widget(*it);
@@ -702,11 +714,13 @@ void Window::PrivateData::onPuglExpose()
 
     if (char* const filename = filenameToRenderInto)
     {
-        const PuglRect rect = puglGetFrame(view);
+        const PuglArea size = puglGetSizeHint(view, PUGL_CURRENT_SIZE);
         filenameToRenderInto = nullptr;
-        renderToPicture(filename, getGraphicsContext(), static_cast<uint>(rect.width), static_cast<uint>(rect.height));
+        renderToPicture(filename, getGraphicsContext(), size.width, size.height);
         std::free(filename);
     }
+
+    endContext();
 #endif
 }
 
@@ -978,7 +992,7 @@ PuglStatus Window::PrivateData::puglEventCallback(PuglView* const view, const Pu
             SetClassLongPtr(view->impl->hwnd, GCLP_HICON, (LONG_PTR) LoadIcon(hInstance, MAKEINTRESOURCE(DGL_WINDOWS_ICON_ID)));
            #endif
            #ifdef DGL_USING_X11
-            puglX11SetWindowTypeAndPID(view, pData->appData->isStandalone);
+            puglX11SetWindowType(view, pData->appData->isStandalone);
            #endif
         }
         break;
