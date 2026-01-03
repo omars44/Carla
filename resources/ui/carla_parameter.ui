@@ -18,12 +18,28 @@
     <number>0</number>
    </property>
    <item>
+    <widget class="QLabel" name="l_index">
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>25</width>
+       <height>0</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QLabel" name="l_name">
      <property name="text">
       <string>Parameter Name</string>
      </property>
      <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      <set>Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
@@ -44,6 +60,9 @@
     <widget class="QLabel" name="l_status">
      <property name="text">
       <string>TextLabel</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>

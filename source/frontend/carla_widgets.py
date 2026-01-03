@@ -148,6 +148,7 @@ class PluginParameter(QWidget):
         pType  = pInfo['type']
         pHints = pInfo['hints']
 
+        self.ui.l_index.setText(str(pInfo['index']))
         self.ui.l_name.setText(pInfo['name'])
         self.ui.widget.setName(pInfo['name'])
         self.ui.widget.setMinimum(pInfo['minimum'])
@@ -162,9 +163,12 @@ class PluginParameter(QWidget):
         if pInfo['comment']:
             self.ui.l_name.setToolTip(pInfo['comment'])
             self.ui.widget.setToolTip(pInfo['comment'])
+        
+        self.ui.l_index.setToolTip(self.tr("Parameter index: %i" % pInfo['index']))
 
         if pType == PARAMETER_INPUT:
             if not pHints & PARAMETER_IS_ENABLED:
+                self.ui.l_index.setEnabled(False)
                 self.ui.l_name.setEnabled(False)
                 self.ui.l_status.setEnabled(False)
                 self.ui.widget.setEnabled(False)
